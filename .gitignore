@@ -1,5 +1,6 @@
 # Environment variables
 .env
+.assign.js
 .env.local
 .env.*.local
 
