@@ -1,0 +1,26 @@
+{
+  "name": "student-landing-page-tool",
+  "version": "1.0.0",
+  "description": "A Node.js application that simplifies the process of creating student landing pages in HubSpot. This tool allows you to quickly create landing pages from templates and manage student access.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/favourch/HubSpot-Landing-Page-Duplicator.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/favourch/HubSpot-Landing-Page-Duplicator/issues"
+  },
+  "homepage": "https://github.com/favourch/HubSpot-Landing-Page-Duplicator#readme",
+  "dependencies": {
+    "axios": "^1.8.4",
+    "body-parser": "^1.20.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}
