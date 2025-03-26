@@ -89,16 +89,74 @@ app.get('/', async (req, res) => {
   const templates = await fetchLandingPageTemplates();
   const teams = await fetchHubSpotTeams();
   
+  // Generate dynamic OG image SVG
+  const ogImageSvg = `
+    <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="630" fill="#f5f8fa"/>
+      <text x="50%" y="45%" text-anchor="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif" font-size="72" font-weight="bold" fill="#33475b">Tamwood</text>
+      <text x="50%" y="60%" text-anchor="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif" font-size="36" fill="#516f90">Student Landing Page Creator</text>
+    </svg>
+  `;
+
+  // Convert SVG to base64
+  const ogImageBase64 = Buffer.from(ogImageSvg).toString('base64');
+  const ogImageUrl = `data:image/svg+xml;base64,${ogImageBase64}`;
+  
   res.send(`
     <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Create Student Landing Page</title>
+      <meta name="description" content="Create and manage student landing pages for Tamwood using HubSpot templates">
+      <meta name="keywords" content="Tamwood, HubSpot, Landing Pages, Student Portal">
+      <meta name="author" content="Tamwood">
+      <meta name="theme-color" content="#f5f8fa">
+      
+      <!-- Open Graph / Facebook -->
+      <meta property="og:type" content="website">
+      <meta property="og:url" content="${req.protocol}://${req.get('host')}${req.originalUrl}">
+      <meta property="og:title" content="Tamwood Student Landing Page Creator">
+      <meta property="og:description" content="Create and manage student landing pages for Tamwood using HubSpot templates">
+      <meta property="og:image" content="${ogImageUrl}">
+
+      <!-- Twitter -->
+      <meta property="twitter:card" content="summary_large_image">
+      <meta property="twitter:url" content="${req.protocol}://${req.get('host')}${req.originalUrl}">
+      <meta property="twitter:title" content="Tamwood Student Landing Page Creator">
+      <meta property="twitter:description" content="Create and manage student landing pages for Tamwood using HubSpot templates">
+      <meta property="twitter:image" content="${ogImageUrl}">
+
+      <!-- Favicon -->
+      <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,${Buffer.from(`
+        <svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+          <rect width="32" height="32" fill="#ff7a59"/>
+          <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-family="system-ui" font-size="20" font-weight="bold" fill="white">T</text>
+        </svg>
+      `).toString('base64')}">
+      
+      <title>Create Student Landing Page | Tamwood</title>
     </head>
     <body>
     <style>
+      :root {
+        --primary-color: #ff7a59;
+        --primary-hover: #ff8f73;
+        --text-primary: #33475b;
+        --text-secondary: #516f90;
+        --bg-primary: #f5f8fa;
+        --bg-secondary: #fff;
+        --border-color: #cbd6e2;
+        --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --space-xs: 0.5rem;
+        --space-sm: 1rem;
+        --space-md: 1.5rem;
+        --space-lg: 2rem;
+      }
+
       * {
         box-sizing: border-box;
         margin: 0;
@@ -107,209 +165,269 @@ app.get('/', async (req, res) => {
 
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-        background-color: #f5f8fa;
+        background-color: var(--bg-primary);
         min-height: 100vh;
         margin: 0;
-        padding: 20px;
+        padding: var(--space-sm);
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
-        gap: 2rem;
+        gap: var(--space-md);
+        padding-top: max(var(--space-lg), 5vh);
+      }
+
+      .header-container {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-sm);
       }
 
       h1 {
-        color: #33475b;
-        font-size: clamp(2rem, 5vw, 3rem);
+        color: var(--text-primary);
+        font-size: clamp(1.5rem, 6vw, 2.5rem);
         font-weight: 700;
         text-align: center;
-        margin: 0;
-        padding: 0;
         letter-spacing: -0.02em;
       }
 
-      form {
-        background: white;
-        padding: clamp(1rem, 5vw, 2rem);
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        width: min(100%, 400px);
+      .info-button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: var(--space-xs);
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+        border-radius: 50%;
+      }
+
+      .info-button:hover {
+        color: var(--text-primary);
+        background-color: rgba(81, 111, 144, 0.1);
+      }
+
+      .info-button:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--primary-color);
+      }
+
+      .info-button svg {
+        width: clamp(20px, 5vw, 24px);
+        height: clamp(20px, 5vw, 24px);
+      }
+
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        padding: var(--space-sm);
+      }
+
+      .modal-overlay.visible {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .info-card {
+        background: var(--bg-secondary);
+        padding: var(--space-lg);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-md);
+        width: min(90%, 400px);
+        position: relative;
+        animation: slideIn 0.3s ease;
+        max-height: 90vh;
+        overflow-y: auto;
         margin: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-color) transparent;
+      }
+
+      .info-card::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .info-card::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .info-card::-webkit-scrollbar-thumb {
+        background-color: var(--border-color);
+        border-radius: 3px;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translate(-50%, -50%) scale(0.95);
+          opacity: 0;
+        }
+        to {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+      }
+
+      .close-button {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        color: var(--text-secondary);
+        transition: color 0.2s ease;
+      }
+
+      .close-button:hover {
+        color: var(--text-primary);
+      }
+
+      .close-button svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .info-card h2 {
+        color: var(--text-primary);
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+      }
+
+      .info-card ol {
+        color: var(--text-secondary);
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .info-card li {
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+      }
+
+      .info-card .note {
+        font-size: 0.9rem;
+        color: var(--primary-color);
+        padding: 0.75rem;
+        background: #fff5f5;
+        border-radius: 4px;
+        margin-top: 0.5rem;
+      }
+
+      form {
+        background: var(--bg-secondary);
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        width: min(100%, 400px);
+        margin: 0 auto;
+        transition: transform 0.3s ease;
+      }
+
+      form:focus-within {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
       }
 
       label {
         display: block;
-        margin-bottom: 1.5rem;
-        color: #33475b;
+        margin-bottom: var(--space-md);
+        color: var(--text-primary);
         font-weight: 500;
+        font-size: 0.95rem;
       }
 
       input, select {
         width: 100%;
-        padding: clamp(8px, 2vw, 12px);
-        margin-top: 6px;
-        border: 1px solid #cbd6e2;
-        border-radius: 4px;
-        font-size: clamp(14px, 4vw, 16px);
+        padding: 0.75rem;
+        margin-top: var(--space-xs);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 1rem;
         transition: all 0.2s ease;
-        -webkit-appearance: none;
-        appearance: none;
-        background-color: white;
+        background-color: var(--bg-secondary);
       }
 
-      select {
-        cursor: pointer;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23516f90' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 12px center;
-        background-size: 16px;
-        padding-right: 40px;
-      }
-
-      select:hover {
-        border-color: #0091ae;
-        background-color: #f8fafb;
+      input:hover, select:hover {
+        border-color: var(--text-secondary);
       }
 
       input:focus, select:focus {
         outline: none;
-        border-color: #0091ae;
-        box-shadow: 0 0 0 3px rgba(0, 145, 174, 0.1);
-        background-color: white;
-      }
-
-      /* Style for select options */
-      select option {
-        padding: 12px;
-        background-color: white;
-        color: #33475b;
-        font-size: 14px;
-      }
-
-      /* Custom dropdown container */
-      .select-wrapper {
-        position: relative;
-        width: 100%;
-      }
-
-      .select-wrapper::after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        right: 12px;
-        transform: translateY(-50%);
-        width: 24px;
-        height: 24px;
-        pointer-events: none;
-      }
-
-      /* Disabled state */
-      select:disabled {
-        background-color: #f5f8fa;
-        border-color: #cbd6e2;
-        cursor: not-allowed;
-        opacity: 0.7;
-      }
-
-      /* Error state */
-      select.error {
-        border-color: #ff3b30;
-        background-color: #fff5f5;
-      }
-
-      select.error:focus {
-        box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.1);
-      }
-
-      /* Success state */
-      select.success {
-        border-color: #00a4bd;
-        background-color: #f0fafb;
-      }
-
-      select.success:focus {
-        box-shadow: 0 0 0 3px rgba(0, 164, 189, 0.1);
-      }
-
-      /* Placeholder styling */
-      select option[value=""] {
-        color: #8f98a3;
-      }
-
-      button {
-        background-color: #ff7a59;
-        color: white;
-        border: none;
-        padding: clamp(10px, 3vw, 12px) clamp(16px, 5vw, 24px);
-        border-radius: 4px;
-        font-size: clamp(14px, 4vw, 16px);
-        font-weight: 600;
-        cursor: pointer;
-        width: 100%;
-        transition: background-color 0.15s ease;
-        -webkit-tap-highlight-color: transparent;
-      }
-
-      button:hover {
-        background-color: #ff8f73;
-      }
-
-      @media (hover: none) {
-        button:hover {
-          background-color: #ff7a59;
-        }
-        button:active {
-          background-color: #ff8f73;
-        }
-      }
-
-      .error-message {
-        color: #ff3b30;
-        background-color: #fff5f5;
-        padding: clamp(8px, 2vw, 12px);
-        border-radius: 4px;
-        margin-bottom: 1.5rem;
-        font-size: clamp(14px, 4vw, 16px);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(255, 122, 89, 0.1);
       }
 
       .info-text {
-        font-size: clamp(12px, 3.5vw, 14px);
-        color: #516f90;
-        margin-top: 4px;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-top: var(--space-xs);
       }
 
-      @media (max-width: 380px) {
-        body {
-          padding: 10px;
-        }
-        
-        form {
-          padding: 1rem;
-        }
-        
-        label {
-          margin-bottom: 1rem;
-        }
+      button[type="submit"] {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.875rem var(--space-md);
+        border-radius: var(--radius-sm);
+        font-size: 1rem;
+        font-weight: 600;
+        width: 100%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: var(--space-md);
+      }
+
+      button[type="submit"]:hover {
+        background-color: var(--primary-hover);
+        transform: translateY(-1px);
+      }
+
+      button[type="submit"]:active {
+        transform: translateY(0);
       }
 
       .switch-container {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-bottom: 1.5rem;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-md);
+        padding: var(--space-sm) 0;
       }
 
+      /* Add styles for team select visibility */
+      #teamSelect {
+        display: none;
+        opacity: 0;
+        height: 0;
+        margin: 0;
+        transition: opacity 0.3s ease, margin 0.3s ease;
+        overflow: hidden;
+      }
+
+      #teamSelect.visible {
+        display: block;
+        opacity: 1;
+        height: auto;
+        margin-bottom: var(--space-md);
+      }
+
+      /* Update switch styles */
       .switch {
         position: relative;
         display: inline-block;
-        width: 50px;
-        height: 24px;
-      }
-
-      .switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
+        width: 44px;
+        height: 22px;
+        flex-shrink: 0;
       }
 
       .slider {
@@ -319,49 +437,121 @@ app.get('/', async (req, res) => {
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #cbd6e2;
+        background-color: var(--border-color);
         transition: .4s;
-        border-radius: 24px;
+        border-radius: 22px;
       }
 
       .slider:before {
         position: absolute;
         content: "";
-        height: 16px;
-        width: 16px;
-        left: 4px;
-        bottom: 4px;
+        height: 18px;
+        width: 18px;
+        left: 2px;
+        bottom: 2px;
         background-color: white;
         transition: .4s;
         border-radius: 50%;
       }
 
       input:checked + .slider {
-        background-color: #ff7a59;
+        background-color: var(--primary-color);
       }
 
       input:checked + .slider:before {
-        transform: translateX(26px);
+        transform: translateX(22px);
       }
 
-      #teamSelect {
-        display: none;
+      @media (min-width: 768px) {
+        body {
+          padding: var(--space-lg);
+          gap: var(--space-lg);
+        }
+
+        form {
+          padding: var(--space-lg);
+        }
+
+        .header-container {
+          margin-bottom: var(--space-lg);
+        }
+
+        input, select {
+          font-size: 1rem;
+          padding: 0.875rem;
+        }
+
+        .info-text {
+          font-size: 0.9rem;
+        }
       }
 
-      #teamSelect.visible {
-        display: block;
+      @media (max-width: 380px) {
+        body {
+          padding: var(--space-sm);
+        }
+        
+        form {
+          padding: var(--space-md);
+        }
+        
+        label {
+          margin-bottom: var(--space-sm);
+        }
+
+        .info-card {
+          padding: var(--space-md);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
       }
     </style>
-    <h1>Tamwood</h1>
+    <div class="header-container">
+      <h1>Tamwood</h1>
+      <button type="button" class="info-button" aria-label="Show information" id="showInfo">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-overlay" id="infoModal">
+      <div class="info-card">
+        <button type="button" class="close-button" aria-label="Close information" id="closeInfo">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <h2>How it works</h2>
+        <ol>
+          <li>Enter the student's name for the landing page title</li>
+          <li>Validate their HubSpot email to ensure they have an account</li>
+          <li>Choose a template (if no default is set)</li>
+          <li>Set a title for their new page</li>
+          <li>Optionally assign to a team</li>
+        </ol>
+        <div class="note">
+          Note: After creation, if you prefer you'll need to manually assign landing page access to the team/student through HubSpot's interface if you want to restrict access.
+        </div>
+      </div>
+    </div>
+
     <form method="POST" action="/clone">
       ${templates.length === 0 && !DEFAULT_TEMPLATE_ID ? 
         '<div class="error-message">No templates found. Please check your HubSpot API token.</div>' : 
         ''}
       <label>Student Name: <input type="text" name="studentName" required autocomplete="name" /></label>
       <label>
-        Student Email: 
+        Validate Student Email: 
         <input type="email" name="studentEmail" required autocomplete="email" />
-        <div class="info-text">The student will receive edit access to their page</div>
+        <div class="info-text">Student must have an existing HubSpot account</div>
       </label>
       ${DEFAULT_TEMPLATE_ID ? 
         `<input type="hidden" name="templateId" value="${DEFAULT_TEMPLATE_ID}"/>` :
@@ -403,6 +593,53 @@ app.get('/', async (req, res) => {
         teamSelect.classList.toggle('visible');
         const teamIdSelect = teamSelect.querySelector('select');
         teamIdSelect.required = this.checked;
+        
+        // Add smooth transition when showing/hiding
+        if (this.checked) {
+          teamSelect.style.display = 'block';
+          // Use setTimeout to ensure the display: block has taken effect
+          setTimeout(() => {
+            teamSelect.style.opacity = '1';
+            teamSelect.style.height = 'auto';
+          }, 10);
+        } else {
+          teamSelect.style.opacity = '0';
+          teamSelect.style.height = '0';
+          // Wait for transition to complete before hiding
+          setTimeout(() => {
+            teamSelect.style.display = 'none';
+          }, 300);
+        }
+      });
+
+      // Add modal functionality
+      const showInfo = document.getElementById('showInfo');
+      const closeInfo = document.getElementById('closeInfo');
+      const infoModal = document.getElementById('infoModal');
+
+      showInfo.addEventListener('click', () => {
+        infoModal.classList.add('visible');
+        document.body.style.overflow = 'hidden';
+      });
+
+      closeInfo.addEventListener('click', () => {
+        infoModal.classList.remove('visible');
+        document.body.style.overflow = '';
+      });
+
+      infoModal.addEventListener('click', (e) => {
+        if (e.target === infoModal) {
+          infoModal.classList.remove('visible');
+          document.body.style.overflow = '';
+        }
+      });
+
+      // Close on escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && infoModal.classList.contains('visible')) {
+          infoModal.classList.remove('visible');
+          document.body.style.overflow = '';
+        }
       });
     </script>
     </body>
